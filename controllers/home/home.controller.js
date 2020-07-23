@@ -19,7 +19,8 @@ module.exports.list = async function(req, res) {
       console.log(rows)
       res.render("home/list",{
       	message:"success",
-        data:rows
+        data:rows,
+        gitVersion: gitVersion
       });
     });
 
