@@ -1,0 +1,14 @@
+INSERT INTO config (ID,name,value) VALUES (1, 'site', 'KCC');
+
+INSERT INTO config (name,value) VALUES ('site', 'PHUC');
+
+sqlite3 gatewaydata.db
+.database
+.table
+
+create table config (id INTEGER PRIMARY KEY AUTOINCREMENT,name text not null,value text,note text);
+
+DROP TABLE config
+
+.header on
+.mode column

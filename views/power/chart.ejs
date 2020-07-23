@@ -1,0 +1,251 @@
+<% layout('../layout/index') %>
+<% block('css', `
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css" />
+
+
+`) %>
+  
+  <style type="text/css">
+    td{
+    	padding-top: 0px !important;
+    	padding-bottom: 0px  !important;
+    }
+
+
+  </style>
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    Power
+    <small>Chart</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+    <li class="active">History Chart</li>
+  </ol>
+</section>
+
+<!-- Main content -->
+<section class="content container-fluid">
+	<div class="panel-heading">
+		<div class="row">
+      <div class="col-md-1">
+        <label style="float: right;">Năm</label>
+      </div>
+      <div class='col-md-1'>
+        <div class="form-group">
+          <select class='form-control' name="year" id="year">
+            <% for(var i=2019; i<= 2020; i++) {%>
+              <option value="<%= i %>" 
+                <% if (year == i) { %>
+                selected=""
+                <% } %>
+                ><%= i %></option>
+            <% } %>
+          </select>
+        </div>
+      </div>
+      <!-- Month -->
+      <div class="col-md-1">
+        <label style="float: right;">Tháng</label>
+      </div>
+      <div class='col-md-1'>
+        <div class="form-group">
+          <select class='form-control' name="month" id="month">
+            <% for(var i=1; i<= 12; i++) {%>
+              <option value="<%= i %>"
+                <% if (month == i) { %>
+                selected=""
+                <% } %>
+                ><%= i %></option>
+            <% } %>
+          </select>
+        </div>
+      </div>
+
+        <div class="col-md-1">
+          <label style="float: right;">Station</label>
+        </div>
+        <div class='col-md-2'>
+          <div class="form-group">
+            <select class='form-control' name="area" id="area">
+              <% for(var i=1; i<= 12; i++) {%>
+                <option value="<%= i %>"><%= i %></option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        
+        <div class="col-md-1">
+          <button onclick="updateChart()" class="form-control">View</button>
+        </div>
+
+        <div class="col-md-1">
+        	<a href="/power/chart">
+          	<button class="form-control">Today</button>
+          </a>
+        </div>
+        
+      </div>
+	</div>
+
+  <div id="loadding" style="color:red; text-align: center;">The system is processing data. Please wait a minute...</div>
+
+	<div class="row">
+    <div class="col-md-10">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <i class="fa fa-bullhorn"></i>
+
+          <h3 class="box-title">POWER [kWH]</h3>
+        </div>
+        
+        <div class="box-body">
+          <canvas id="myChart"></canvas>
+  
+          
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+    	<table class="table table-condensed" id='items_table'>
+      
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+   -->
+
+<% block('script', `
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+
+`) -%>
+
+<script type="text/javascript">
+	
+
+</script>
+
+<script type="text/javascript">
+	let labels = []; let vals = []; let tblData = [];
+  var ctx = document.getElementById('myChart').getContext('2d');
+	var chart = new Chart(ctx, {
+	    type: 'bar',
+	    data: {
+	        labels: [],
+	        datasets: [{
+	            label: "Station " + 1,
+	            backgroundColor: 'rgb(255, 99, 132)',
+	            borderColor: 'rgb(255, 99, 150)',
+	            data: []
+	        }]
+	    },
+	    // Configuration options go here
+	    options: {
+	    	legend: {
+          display: true,
+          labels: {
+              fontColor: 'rgb(255, 99, 1)'
+          }
+        }
+	    }
+	});
+
+
+	$.ajax({
+    url: '/power/apigetdata',
+    method: 'post',
+    data: { area: $('#area').val(), year: $('#year').val(), month: $('#month').val() }
+    }).done(function(res) {
+        $('#loadding').hide();
+        if (true) {
+	        console.log(res);
+	        res.forEach(function(dt){
+	        	labels.push(dt.date)
+	        	vals.push(dt.value)
+
+	        	tblData.push({ time: dt.date, val:dt.value})
+	        })
+	        //console.log(vals)
+	        chart.data.labels = labels;
+	        chart.data.datasets[0].data = vals;
+          
+
+	      	chart.update();
+	      	
+	      	updateDigitalData(tblData);
+
+		    } else {
+          $('#loadding').hide();
+		      console.log('error...ajax');
+		    }
+		  });
+
+  function updateChart(){
+  	let area = $('#area').val();
+    let year = $('#year').val();
+    let month = $('#month').val();
+
+    $('#loadding').show();
+
+  	$.ajax({
+    url: '/power/apigetdata',
+    method: 'post',
+    data: { area: area, year: year, month: month }
+    }).done(function(res) {
+        $('#loadding').hide();
+        if (true) {
+        	labels = []; vals = []; tblData = [];
+	        console.log("res = " + res);
+	        res.forEach(function(dt){
+	        	labels.push(dt.date)
+	        	vals.push(dt.value)
+	        	tblData.push({ time: dt.date, val:dt.value})
+	        })
+	      	chart.data.datasets[0].data = vals;
+          chart.data.datasets[0].label = "Station " + area;
+	      	chart.update();
+	      	updateDigitalData(tblData);
+	        //window.location.reload();
+		    } else {
+          $('#loadding').hide();
+		        console.log('error...ajax');
+		    }
+		  });
+  }
+
+  function updateDigitalData(datas){
+  	let strHTML = "", strHeader = "";
+  	strHeader = `<tr>
+          <th>Day</th>
+          <th>kWH</th>
+        </tr>`
+    // console.log(datas)
+  	datas.forEach(function(dt){
+  		strHTML += 
+  		`<tr>
+          <td>`+ dt.time +`</td>
+          <td>`+ dt.val + `</td>  
+      </tr>`
+  	})
+  	document.getElementById('items_table').innerHTML =  strHeader + strHTML;
+
+  }
+</script>
+
+
+
